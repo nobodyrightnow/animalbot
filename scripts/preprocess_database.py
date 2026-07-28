@@ -28,22 +28,12 @@ def create_animal_taxon_file(input_file, output_file):
         chunksize=100_000,
         usecols=TAXON_COLS
     ):
-        # operation find agent p
-        platypus = chunk[chunk["dwc:taxonID"] == "74WBV"]
-        if not platypus.empty:
-            print("Found platypus!")
-            print(platypus)
-        else:
-            print("No platypus here")
-
         animals = chunk[
             (chunk["dwc:kingdom"].isin(KINGDOM)) &
             (chunk["dwc:taxonomicStatus"].isin(STATUS)) &
             (chunk["dwc:taxonRank"].isin(TAXON_RANKS)) &
             (~chunk["dwc:taxonID"].str.startswith("BOLD.", na=False))
         ]
-
-        print("Still present?", (animals["dwc:taxonID"] == "74WBV").any())
 
         num_animals = len(animals)
 
@@ -87,7 +77,7 @@ def create_vernacular_names_file(taxon_file, input_file, output_file):
     for chunk in pd.read_csv(
         input_file,
         sep="\t",
-        quoting=csv.QUOTE_MINIMAL,
+        quoting=csv.QUOTE_NONE,
         dtype=str,
         on_bad_lines="skip",
         chunksize=100_000,
