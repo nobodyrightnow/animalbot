@@ -37,7 +37,7 @@ else:
 
     # Convert text prompts to tokens in batches
     prompt_features = []
-    batch_size = 1024
+    batch_size = 2048
 
     with torch.no_grad():
         for i in range(0, len(all_prompts), batch_size):
@@ -95,11 +95,12 @@ print(text_features.shape)
 print(similarities.shape)
 print(similarities.argmax().item())
 """
+
 # Print top k
-top_k = torch.topk(similarities, k=5)
+top_k = torch.topk(similarities, k=20)
 
 for score, i in zip(top_k.values, top_k.indices):
     taxon = taxa[i.item()] # ensure i (tensor) can be used as an index
-    print(f"{taxon["common_name"]}: {(score.item() * 100):.2f}%")
+    print(f"{taxon["common_name"]}: {score.item():.2f}")
 
 print(f"I think it's a {taxa[similarities.argmax().item()]["common_name"]} ({taxa[similarities.argmax().item()]["scientific_name"]})!")
