@@ -1,6 +1,11 @@
-# Test images and results
-images/
-results.json
+# vscode folder
+.vscode/
+
+# Database files
+data/
+
+# Cache
+cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
