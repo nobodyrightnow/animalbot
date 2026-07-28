@@ -11,7 +11,7 @@ print("Starting to read common names.")
 vernacular = pd.read_csv(
     PROCESSED_NAMES,
     sep="\t",
-    quoting=csv.QUOTE_MINIMAL,
+    quoting=csv.QUOTE_NONE,
     on_bad_lines="skip",
     usecols=NAME_COLS
 )
@@ -45,7 +45,7 @@ print("Starting to read other taxa data. This may take a while...")
 taxa = pd.read_csv(
     PROCESSED_TAXON,
     sep="\t",
-    quoting=csv.QUOTE_MINIMAL,
+    quoting=csv.QUOTE_NONE,
     engine="python",
     on_bad_lines="skip",
     usecols=TAXON_COLS
