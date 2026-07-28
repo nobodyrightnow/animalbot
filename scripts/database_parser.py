@@ -101,8 +101,8 @@ for taxon in taxa.itertuples(index=False):
             "prompt": [
                 f"a photo of {taxon.commonName}",
                 f"a photo of {taxon.scientificName}",
-                f"a wildlife photograph of {taxon.scientificName}",
-                f"an image of {taxon.scientificName}, commonly known as {taxon.commonName}"
+                f"a wildlife photograph of {taxon.commonName}",
+                f"a photo of {taxon.commonName} in nature"
             ]
         }
     )
