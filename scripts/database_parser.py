@@ -16,18 +16,19 @@ vernacular = pd.read_csv(
     usecols=NAME_COLS
 )
 
-total_names = len(vernacular)
-print(f"Read in {total_names} common names")
+total = len(vernacular)
+print(f"Read in {total} common names")
 
 # Filter names
 common_names = vernacular[
     (vernacular["dcterms:language"].isin(LANGUAGE))
 ]
 
-new_num_names = len(vernacular)
-print(f"Filtered out {total_names - new_num_names} of different languages. There are now {new_num_names} names")
-total_names = new_num_names
+new_num = len(vernacular)
+print(f"Filtered out {total_names - new_num} of different languages. There are now {new_num} names")
+total = new_num
 
+"""
 # Remove extra names for species
 common_names = common_names.drop_duplicates(subset="dwc:taxonID")
 
@@ -37,8 +38,9 @@ total_names = new_num_names
 
 # Create new commonName col for lowercase (faster than doing it during the loop later)
 common_names["commonName"] = common_names["dwc:vernacularName"].str.lower()
+"""
 
-print(f"{total_names} common names have been stored!")
+print(f"{total} common names have been stored!")
 print("Starting to read other taxa data. This may take a while...")
 
 # Read in all of the scientific names of animals
@@ -51,8 +53,8 @@ taxa = pd.read_csv(
     usecols=TAXON_COLS
 )
 
-total_taxa = len(taxa)
-print(f"Read in {total_taxa} taxa")
+total = len(taxa)
+print(f"Read in {total} taxa")
 
 # Filter taxa
 taxa = taxa[
@@ -70,9 +72,9 @@ taxa = taxa[
     (taxa["dwc:taxonomicStatus"].isin(STATUS))
 ]
 
-new_num_taxa = len(taxa)
-print(f"Filtered out {total_taxa - new_num_taxa} taxa. There are now {new_num_taxa} taxa")
-total_taxa = new_num_taxa
+new_num = len(taxa)
+print(f"Filtered out {total - new_num} taxa. There are now {new_num} taxa")
+total_taxa = new_num
 
 # Create new scientificName col based on genericName and specificEpithet
 taxa["scientificName"] = (
@@ -85,10 +87,10 @@ print("Starting to merge the data. This may take a while...")
 # Merge common_names and animals based on common factor (taxonID)
 taxa = taxa.merge(common_names, on="dwc:taxonID")
 
-new_num_taxa = len(taxa)
-print(f"The data has been merged successfully! {total_taxa - new_num_taxa} taxa were lost, likely because they had no common name")
-total_taxa = new_num_taxa
-print(f"Starting to write {total_taxa} taxa to the output file. This may take a while...")
+new_num = len(taxa)
+print(f"The data has been merged successfully! {total - new_num} taxa were lost, likely because they had no common name")
+total = new_num
+print(f"Starting to write {total} taxa to the output file. This may take a while...")
 
 # Write to json file
 output = []
