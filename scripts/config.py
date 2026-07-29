@@ -8,9 +8,11 @@ OUTPUT = DATA / "processed"
 
 DATABASE_TAXON = DATA / "Taxon.tsv"
 DATABASE_NAMES = DATA / "VernacularName.tsv"
+DATABASE_SPECIES_PROFILE = DATA / "SpeciesProfile.tsv"
+
 PROCESSED_TAXON = OUTPUT / "Taxon_Animalia.tsv"
 PROCESSED_NAMES = OUTPUT / "VernacularName_Animalia_Eng.tsv"
-
+PROCESSED_SPECIES_PROFILE = OUTPUT / "SpeciesProfile_Animalia.tsv"
 PROCESSED_DATA = OUTPUT / "taxa.json"
 
 CACHE = ROOT / "cache"
@@ -47,7 +49,14 @@ NAME_COLS = [
     "dwc:vernacularName"
 ]
 
+PROFILE_COLS = [
+    "dwc:taxonID",
+    "gbif:isExtinct",
+]
+
 LANGUAGE = {"eng"}
+
+EXTINCT = "false"
 
 PHYLUM = {
     "Brachiopoda", # similar to bivalve molluscs
