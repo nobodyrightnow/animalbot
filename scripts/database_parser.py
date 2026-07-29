@@ -25,7 +25,7 @@ common_names = vernacular[
 ]
 
 new_num = len(vernacular)
-print(f"Filtered out {total_names - new_num} of different languages. There are now {new_num} names")
+print(f"Filtered out {total - new_num} of different languages. There are now {new_num} names")
 total = new_num
 
 """
