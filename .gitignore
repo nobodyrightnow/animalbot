@@ -2,9 +2,7 @@
 .vscode/
 
 # Database files
-Taxon.tsv
-VernacularNames.tsv
-processed/
+data/
 
 # Cache
 cache/
