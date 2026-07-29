@@ -49,6 +49,7 @@ vernacular = pd.read_csv(
     sep="\t",
     quoting=csv.QUOTE_NONE,
     on_bad_lines="skip",
+    dtype=str,
     usecols=NAME_COLS
 )
 
@@ -56,7 +57,7 @@ total = len(vernacular)
 print(f"Read in {total} common names")
 
 # Filter names
-common_names = vernacular[
+vernacular = vernacular[
     (vernacular["dcterms:language"].isin(LANGUAGE))
 ]
 
@@ -65,14 +66,14 @@ print(f"Filtered out {total - new_num} of excluded languages. There are now {new
 total = new_num
 
 # Remove extra names for species
-common_names = common_names.drop_duplicates(subset="dwc:taxonID")
+vernacular = vernacular.drop_duplicates(subset="dwc:taxonID")
 
 new_num = len(vernacular)
 print(f"Dropped {total - new_num} duplicate names. There are now {new_num} names")
 total = new_num
 
 # Create new commonName col for lowercase (faster than doing it during the loop later)
-common_names["commonName"] = common_names["dwc:vernacularName"].str.lower()
+vernacular["commonName"] = vernacular["dwc:vernacularName"].str.lower()
 
 print(f"{total} common names have been stored!")
 # Read in species profiles for extinction data
@@ -82,6 +83,7 @@ profiles = pd.read_csv(
     PROCESSED_SPECIES_PROFILE,
     sep="\t",
     quoting=csv.QUOTE_NONE,
+    dtype=str,
     usecols=PROFILE_COLS
 )
 
@@ -113,16 +115,23 @@ taxa = pd.read_csv(
 total = len(taxa)
 print(f"Read in {total} taxa")
 
+taxa = taxa.rename(columns={
+    "dwc:kingdom": "kingdom",
+    "dwc:phylum": "phylum",
+    "dwc:class": "class_taxon",
+    "dwc:order": "order",
+})
+
 # Filter taxa
 taxa = taxa[
     # By kingdom
-    (taxa["dwc:kingdom"].isin(KINGDOM)) &
+    (taxa["kingdom"].isin(KINGDOM)) &
     # By phylum
-    (taxa["dwc:phylum"].isin(PHYLUM)) &
+    (taxa["phylum"].isin(PHYLUM)) &
     # By class
-    (taxa["dwc:class"].isin(CLASS)) &
+    (taxa["class_taxon"].isin(CLASS)) &
     # By order
-    (~taxa["dwc:order"].isin(OMITTED_ORDER)) &
+    (~taxa["order"].isin(OMITTED_ORDER)) &
     # By rank
     (taxa["dwc:taxonRank"].isin(TAXON_RANKS)) &
     # By status
@@ -141,8 +150,8 @@ taxa["scientificName"] = (
 print(f"{total} taxa have been stored!")
 print("Starting to merge the data. This may take a while...")
 
-# Merge common_names and taxa based on common factor (taxonID)
-taxa = taxa.merge(common_names, on="dwc:taxonID")
+# Merge common names and taxa based on common factor (taxonID)
+taxa = taxa.merge(vernacular, on="dwc:taxonID")
 # Merge profiles and taxa based on common factor (taxonID)
 taxa = taxa.merge(profiles, on="dwc:taxonID")
 
@@ -160,14 +169,14 @@ for taxon in taxa.itertuples(index=False):
             "common_name": taxon.commonName,
             "scientific_name": taxon.scientificName,
             "taxonomy": {
-                "class": taxon["dwc:class"]
+                "class": taxon.class_taxon
             },
             # BioCLIP is trained on specific taxon data, so it shouldn't need
             # filler words like "a photo of a" like other CLIP models.
             # Additionally, scientific names are more useful to it
             # because they are entirely unique to a species and should prevent confusion.
             "prompts": [
-                {taxon.scientificName},
+                f"{taxon.scientificName}",
                 f"{taxon.commonName} ({taxon.scientificName})"
             ]
         }
