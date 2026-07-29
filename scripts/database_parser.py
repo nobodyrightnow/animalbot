@@ -12,11 +12,13 @@ from config import (
     TAXON_RANKS, 
     STATUS, 
     PHYLUM, 
-    OMITTED_CLASS, 
     OMITTED_ORDER, 
     PROCESSED_DATA,
     CLASS,
-    CLASS_DATA
+    CLASS_DATA,
+    PROCESSED_SPECIES_PROFILE,
+    PROFILE_COLS,
+    EXTINCT
 )
 
 print("Generating broader files to help the model narrow down...")
@@ -29,7 +31,7 @@ for name in CLASS:
         {
             "class_name": name,
             "prompts": [
-                f"an animal from {name}"
+                f"a species from {name}"
             ]
         }
     )
@@ -73,9 +75,32 @@ total = new_num
 common_names["commonName"] = common_names["dwc:vernacularName"].str.lower()
 
 print(f"{total} common names have been stored!")
+# Read in species profiles for extinction data
+print("Starting to read species profiles...")
+
+profiles = pd.read_csv(
+    PROCESSED_SPECIES_PROFILE,
+    sep="\t",
+    quoting=csv.QUOTE_NONE,
+    usecols=PROFILE_COLS
+)
+
+total = len(profiles)
+print(f"Read in {total} profiles")
+
+# Filter profiles
+profiles = profiles[
+    (profiles["gbif:isExtinct"] == EXTINCT)
+]
+
+new_num = len(profiles)
+print(f"Filtered out {total - new_num} species profiles. There are now {new_num} profiles")
+total = new_num
+
+# Read in all of the taxonomic data
 print("Starting to read other taxa data. This may take a while...")
 
-# Read in all of the scientific names of animals
+
 taxa = pd.read_csv(
     PROCESSED_TAXON,
     sep="\t",
@@ -113,14 +138,16 @@ taxa["scientificName"] = (
     taxa["dwc:genericName"].fillna("") + " " + taxa["dwc:specificEpithet"].fillna("")
 ).str.strip()
 
-print("The rest of the data has been read!")
+print(f"{total} taxa have been stored!")
 print("Starting to merge the data. This may take a while...")
 
-# Merge common_names and animals based on common factor (taxonID)
+# Merge common_names and taxa based on common factor (taxonID)
 taxa = taxa.merge(common_names, on="dwc:taxonID")
+# Merge profiles and taxa based on common factor (taxonID)
+taxa = taxa.merge(profiles, on="dwc:taxonID")
 
 new_num = len(taxa)
-print(f"The data has been merged successfully! {total - new_num} taxa were lost, likely because they had no common name")
+print(f"The data has been merged successfully! {total - new_num} taxa were lost")
 total = new_num
 print(f"Starting to write {total} taxa to the output file. This may take a while...")
 
