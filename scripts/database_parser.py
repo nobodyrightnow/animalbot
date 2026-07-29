@@ -95,7 +95,7 @@ taxa = taxa[
     # By phylum
     (taxa["dwc:phylum"].isin(PHYLUM)) &
     # By class
-    (~taxa["dwc:class"].isin(OMITTED_CLASS)) &
+    (taxa["dwc:class"].isin(CLASS)) &
     # By order
     (~taxa["dwc:order"].isin(OMITTED_ORDER)) &
     # By rank
@@ -132,6 +132,9 @@ for taxon in taxa.itertuples(index=False):
         {
             "common_name": taxon.commonName,
             "scientific_name": taxon.scientificName,
+            "taxonomy": {
+                "class": taxon["dwc:class"]
+            },
             # BioCLIP is trained on specific taxon data, so it shouldn't need
             # filler words like "a photo of a" like other CLIP models.
             # Additionally, scientific names are more useful to it
