@@ -1,4 +1,4 @@
-# Create a smaller Taxon file that has exclusively animal data
+# Create a smaller Taxon file that has exclusively certain data
 
 import pandas as pd
 import csv
