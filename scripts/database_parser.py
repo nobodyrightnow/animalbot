@@ -28,17 +28,15 @@ new_num = len(vernacular)
 print(f"Filtered out {total - new_num} of excluded languages. There are now {new_num} names")
 total = new_num
 
-"""
 # Remove extra names for species
 common_names = common_names.drop_duplicates(subset="dwc:taxonID")
 
-new_num_names = len(vernacular)
-print(f"Dropped {total_names - new_num_names} duplicate names. There are now {new_num_names} names")
-total_names = new_num_names
+new_num = len(vernacular)
+print(f"Dropped {total - new_num} duplicate names. There are now {new_num} names")
+total = new_num
 
 # Create new commonName col for lowercase (faster than doing it during the loop later)
 common_names["commonName"] = common_names["dwc:vernacularName"].str.lower()
-"""
 
 print(f"{total} common names have been stored!")
 print("Starting to read other taxa data. This may take a while...")
@@ -98,13 +96,10 @@ output = []
 for taxon in taxa.itertuples(index=False):
     output.append(
         {
-            "common_name": taxon.commonName,
+            "common_name": common_names,
             "scientific_name": taxon.scientificName,
             "prompt": [
-                f"a photo of {taxon.commonName}",
-                f"a photo of {taxon.scientificName}",
-                f"a wildlife photograph of {taxon.commonName}",
-                f"a photo of {taxon.commonName} in nature"
+                
             ]
         }
     )
