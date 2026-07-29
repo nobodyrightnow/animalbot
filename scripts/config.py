@@ -18,7 +18,7 @@ PROCESSED_DATA = OUTPUT / "taxa.json"
 CACHE = ROOT / "cache"
 TAXA_EMBEDDINGS = CACHE / "taxa_embeddings.pt"
 
-CLASS_DATA = PROCESSED_DATA / "classes.json"
+CLASS_DATA = OUTPUT / "classes.json"
 
 KINGDOM = {"Animalia"}
 STATUS = {"accepted"}
