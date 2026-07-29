@@ -7,7 +7,7 @@ from config import PROCESSED_NAMES, NAME_COLS, LANGUAGE, PROCESSED_TAXON, TAXON_
 
 print("Starting to read common names.")
 
-# Read in all of the common names of animals
+# Read in all of the common names of taxa
 vernacular = pd.read_csv(
     PROCESSED_NAMES,
     sep="\t",
@@ -25,7 +25,7 @@ common_names = vernacular[
 ]
 
 new_num = len(vernacular)
-print(f"Filtered out {total - new_num} of different languages. There are now {new_num} names")
+print(f"Filtered out {total - new_num} of excluded languages. There are now {new_num} names")
 total = new_num
 
 """
