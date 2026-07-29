@@ -3,7 +3,41 @@
 import pandas as pd
 import csv
 import json
-from config import PROCESSED_NAMES, NAME_COLS, LANGUAGE, PROCESSED_TAXON, TAXON_COLS, KINGDOM, TAXON_RANKS, STATUS, PHYLUM, OMITTED_CLASS, OMITTED_ORDER, PROCESSED_DATA
+from config import (
+    PROCESSED_NAMES, 
+    NAME_COLS, LANGUAGE, 
+    PROCESSED_TAXON, 
+    TAXON_COLS, 
+    KINGDOM, 
+    TAXON_RANKS, 
+    STATUS, 
+    PHYLUM, 
+    OMITTED_CLASS, 
+    OMITTED_ORDER, 
+    PROCESSED_DATA,
+    CLASS,
+    CLASS_DATA
+)
+
+print("Generating broader files to help the model narrow down...")
+
+# Generate a classes file for the model to use
+output = []
+
+for name in CLASS:
+    output.append(
+        {
+            "class_name": name,
+            "prompts": [
+                f"an animal from {name}"
+            ]
+        }
+    )
+
+with open(CLASS_DATA, "w", encoding="utf-8") as f:
+    json.dump(output, f, indent=4, ensure_ascii=False)
+
+print("Finished!")
 
 print("Starting to read common names.")
 
