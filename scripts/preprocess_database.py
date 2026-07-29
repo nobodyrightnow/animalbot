@@ -2,14 +2,22 @@
 
 import pandas as pd
 import csv
-from config import DATABASE_TAXON, PROCESSED_TAXON, DATABASE_NAMES, PROCESSED_NAMES, KINGDOM, STATUS, TAXON_RANKS, TAXON_COLS, LANGUAGE, NAME_COLS, DATA, OUTPUT
+from config import (DATABASE_TAXON,
+                    PROCESSED_TAXON, 
+                    DATABASE_NAMES, 
+                    PROCESSED_NAMES, 
+                    KINGDOM, STATUS, 
+                    TAXON_RANKS, 
+                    TAXON_COLS, 
+                    LANGUAGE, 
+                    NAME_COLS, 
+                    DATA, 
+                    OUTPUT,
+                )
 from pathlib import Path
 import sys
 
 csv.field_size_limit(sys.maxsize)
-
-# Make sure data folder exists
-DATA.mkdir(exist_ok=True)
 
 # Function to create a simplified Taxon file to save time when parsing it
 def create_animal_taxon_file(input_file, output_file):
@@ -108,19 +116,19 @@ def create_vernacular_names_file(taxon_file, input_file, output_file):
 
 # main
 def main(force=False):
+    # Make sure data folder exists
+    DATA.mkdir(exist_ok=True)
+    OUTPUT.mkdir(exist_ok=True)
+    # Generate processed taxon file
     if force or not Path.exists(PROCESSED_TAXON):
-        DATA.mkdir(exist_ok=True)
-        OUTPUT.mkdir(exist_ok=True)
         create_animal_taxon_file(DATABASE_TAXON, PROCESSED_TAXON)
     else:
         print(f"Using existing {PROCESSED_TAXON}")
+    # Generate processed names file
     if force or not Path.exists(PROCESSED_NAMES):
-        DATA.mkdir(exist_ok=True)
-        OUTPUT.mkdir(exist_ok=True)
-        create_vernacular_names_file(PROCESSED_TAXON, DATABASE_NAMES, PROCESSED_NAMES)
+        create_vernacular_names_file(PROCESSED_TAXON, DATABASE_NAMES, PROCESSED_NAMES)  
     else:
         print(f"Using existing {PROCESSED_NAMES}")
-
 
 if __name__ == "__main__":
     main(True)
