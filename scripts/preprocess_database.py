@@ -18,9 +18,8 @@ from config import (DATABASE_TAXON,
                     PROCESSED_SPECIES_PROFILE
                 )
 from pathlib import Path
-import sys
 
-csv.field_size_limit(sys.maxsize)
+csv.field_size_limit(10_000_000)
 
 # Function to create a simplified Taxon file to save time when parsing it
 def create_taxon_file(input_file, output_file):
