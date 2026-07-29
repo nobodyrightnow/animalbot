@@ -96,10 +96,15 @@ output = []
 for taxon in taxa.itertuples(index=False):
     output.append(
         {
-            "common_name": common_names,
+            "common_name": taxon.commonName,
             "scientific_name": taxon.scientificName,
-            "prompt": [
-                
+            # BioCLIP is trained on specific taxon data, so it shouldn't need
+            # filler words like "a photo of a" like other CLIP models.
+            # Additionally, scientific names are more useful to it
+            # because they are entirely unique to a species and should prevent confusion.
+            "prompts": [
+                {taxon.scientificName},
+                f"{taxon.commonName} ({taxon.scientificName})"
             ]
         }
     )
