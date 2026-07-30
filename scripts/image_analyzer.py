@@ -27,12 +27,12 @@ if Path.exists(TAXA_EMBEDDINGS):
     text_features = torch.load(TAXA_EMBEDDINGS)
 else:
     # Create text prompts
-    PROMPTS_PER_TAXA = len(taxa[0]["prompt"])
+    PROMPTS_PER_TAXA = len(taxa[0]["prompts"])
 
     all_prompts = [] # list of all prompts for all taxa
 
     for taxon in taxa:
-        prompts = taxon["prompt"] # list of strings
+        prompts = taxon["prompts"] # list of strings
         all_prompts.extend(prompts) # add each prompt to the list
 
     # Convert text prompts to tokens in batches
@@ -97,10 +97,10 @@ print(similarities.argmax().item())
 """
 
 # Print top k
-top_k = torch.topk(similarities, k=20)
+top_k = torch.topk(similarities, k=7)
 
 for score, i in zip(top_k.values, top_k.indices):
     taxon = taxa[i.item()] # ensure i (tensor) can be used as an index
-    print(f"{taxon["common_name"]}: {score.item():.2f}")
+    print(f"{taxon['common_name']}: {score.item():.2f}")
 
-print(f"I think it's a {taxa[similarities.argmax().item()]["common_name"]} ({taxa[similarities.argmax().item()]["scientific_name"]})!")
+print(f"I think it's a {taxa[similarities.argmax().item()]['common_name']} ({taxa[similarities.argmax().item()]['scientific_name']})!")

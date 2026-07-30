@@ -17,7 +17,8 @@ from config import (
     CLASS,
     PROCESSED_SPECIES_PROFILE,
     PROFILE_COLS,
-    EXTINCT
+    EXTINCT,
+    PROMPT_TEMPLATES
 )
 
 print("Starting to read common names.")
@@ -143,6 +144,15 @@ print(f"Starting to write {total} taxa to the output file. This may take a while
 output = []
 
 for taxon in taxa.itertuples(index=False):
+    # in my (admittedly brief) testing, BioCLIP found stronger associations with classes that had both common and scientific names in their prompts
+    # and prompts that were in a CLIP format (so such as saying "a photo of a dog" instead of "dog")
+    prompts = []
+    # this uses a list of prompts for CLIP models provided by OpenAI, so hopefully this should help the model out
+    for template in PROMPT_TEMPLATES:
+        prompts.append(PROMPT_TEMPLATES[template](taxon.commonName))
+        prompts.append(PROMPT_TEMPLATES[template](taxon.scientificName))
+        prompts.append(PROMPT_TEMPLATES[template](f"{taxon.commonName} ({taxon.scientificName})"))
+     
     output.append(
         {
             "common_name": taxon.commonName,
@@ -150,13 +160,8 @@ for taxon in taxa.itertuples(index=False):
             "taxonomy": {
                 "class": taxon.class_taxon
             },
-            # BioCLIP is trained on specific taxon data, so it shouldn't need
-            # filler words like "a photo of a" like other CLIP models.
-            # Additionally, scientific names are more useful to it
-            # because they are entirely unique to a species and should prevent confusion.
             "prompts": [
-                f"{taxon.scientificName}",
-                f"{taxon.commonName} ({taxon.scientificName})"
+                prompts
             ]
         }
     )
