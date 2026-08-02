@@ -1,196 +1,235 @@
-# Create a smaller Taxon file that has exclusively certain data
+# INFORMATION ON PREPROCESSING COL FILES
+
+# useful:
+# col:ID | cross-referencing specific taxa between files
+# col:status | filtering out disputed species
+# col:scientificName | ???
+# col:rank | useful! (kingdom, species, etc.)
+# col:uninomial | names of kingdoms, phyla, etc.
+# col:genericName | ???
+# col:infragenericEpithet | ???
+# col:specificEpithet | ???
+# col:infraspecificEpithet | ???
+# col:nameStatus | accepted, established, not established, doubtful, NaN
+# col:extinct | filtering out extinct species
+# col:species
+# col:subgenus
+# col:genus
+# col:subtribe
+# col:tribe
+# col:subfamily
+# col:family
+# col:superfamily
+# col:suborder
+# col:order
+# col:subclass
+# col:class
+# col:subphylum
+# col:phylum
+# col:kingdom
+
+# not useful:
+# col:parentID
+# col:etymology
+# col:alternativeID
+# col:nameAlternativeID
+# col:sourceID
+# col:basionymID
+# col:originalSpelling
+# col:notho
+# col:gender
+# col:genderAgreement
+# col:authorship
+# col:combinationAuthorship
+# col:combinationAuthorshipID
+# col:combinationExAuthorship
+# col:combinationExAuthorshipID
+# col:combinationAuthorshipYear
+# col:basionymAuthorship
+# col:basionymAuthorshipID
+# col:basionymAuthorshipYear
+# col:namePhrase
+# col:nameReferenceID
+# col:namePublishedInYear
+# col:namePublishedInPage
+# col:namePublishedInPageLink
+# col:accordingToID
+# col:accordingToPage
+# col:accordingToPageLink
+# col:referenceID
+# col:scrutinizer
+# col:scrutinizerID
+# col:scrutinizerDate
+# col:temporalRangeStart
+# col:temporalRangeEnd
+# col:cultivarEpithet | additional name given to plant species
+# col:code
+# col:environment
+# col:link
+# col:section | another division usually used for plants and fungi, between species and subgenus
+# col:ordinal
+# col:nameRemarks
+# col:remarks
+# col:modified
+# col:modifiedBy
+# clb:merged
 
 import pandas as pd
 import csv
-from config import (DATABASE_TAXON,
-                    PROCESSED_TAXON, 
-                    DATABASE_NAMES, 
-                    PROCESSED_NAMES, 
-                    KINGDOM, STATUS, 
-                    TAXON_RANKS, 
-                    TAXON_COLS, 
-                    LANGUAGE, 
-                    NAME_COLS, 
-                    DATA, 
-                    OUTPUT,
-                    DATABASE_SPECIES_PROFILE,
-                    PROFILE_COLS,
-                    PROCESSED_SPECIES_PROFILE
-                )
+import json
 from pathlib import Path
+from config import (
+    DATABASE_TAXON,
+    DATABASE_NAMES,
+    LANGUAGE,
+    RANKS,
+    PROCESSED,
+)
 
-csv.field_size_limit(10_000_000)
+csv.field_size_limit(10_000_000) # so python engine won't cry when reading files
 
-# Function to create a simplified Taxon file to save time when parsing it
-def create_taxon_file(input_file, output_file):
-    print("Starting the reading process. This may take a while...")
+# A function to read in taxonomic data into a dataframe
+def read_taxa(taxa_file: Path) -> pd.DataFrame:
+    print("Reading...")
 
-    first_chunk = True
-    total_taxa = 0
-
-    for chunk in pd.read_csv(
-        input_file,
+    taxa = pd.read_csv(
+        taxa_file,
         sep="\t",
         quoting=csv.QUOTE_NONE,
-        dtype=str,
         engine="python",
         on_bad_lines="error",
-        chunksize=100_000,
-        usecols=TAXON_COLS
-    ):
-        taxa = chunk[
-            (chunk["dwc:kingdom"].isin(KINGDOM)) &
-            (chunk["dwc:taxonomicStatus"].isin(STATUS)) &
-            (chunk["dwc:taxonRank"].isin(TAXON_RANKS)) &
-            (~chunk["dwc:taxonID"].str.startswith("BOLD.", na=False))
+        dtype=str,
+        usecols=[
+            "col:ID",
+            "col:status",
+            "col:scientificName",
+            "col:rank",
+            "col:uninomial",
+            "col:genericName",
+            "col:infragenericEpithet",
+            "col:specificEpithet",
+            "col:infraspecificEpithet",
+            "col:nameStatus",
+            "col:extinct",
+            "col:species",
+            "col:subgenus",
+            "col:genus",
+            "col:subtribe",
+            "col:tribe",
+            "col:subfamily",
+            "col:family",
+            "col:superfamily",
+            "col:suborder",
+            "col:order",
+            "col:subclass",
+            "col:class",
+            "col:subphylum",
+            "col:phylum",
+            "col:kingdom",
         ]
-
-        num_taxa = len(taxa)
-
-        print(f"Saving {num_taxa} taxa")
-
-        taxa.to_csv(
-            output_file,
-            sep="\t",
-            index=False,
-            mode="w" if first_chunk else "a",
-            header=first_chunk
-        )
-
-        total_taxa += num_taxa
-
-        first_chunk = False
-
-    print(f"Successfully created {output_file} with {total_taxa} taxa!")
-
-# Function to create a simplified VernacularName file to save time when parsing it
-def create_vernacular_names_file(taxon_file, input_file, output_file):
-    print("Gathering taxa IDs into a set...")
-
-    animal_ids = set(
-        pd.read_csv(
-            taxon_file,
-            sep="\t",
-            quoting=csv.QUOTE_NONE,
-            usecols=["dwc:taxonID"],
-            dtype=str
-        )["dwc:taxonID"]
     )
 
-    print("Done!")
+    total_taxa = len(taxa)
+    print(f"Read in {total_taxa} taxa. Filtering...")
 
-    print("Starting the reading process. This may take a while...")
+    # Filter out certain ranks, extinct taxa, and statuses
+    taxa = taxa[
+        ~(taxa["col:rank"].isin(["unranked", "subspecies"])) &
+        (taxa["col:extinct"] != "true") &
+        (taxa["col:status"] == "accepted") &
+        ~(taxa["col:nameStatus"].isin(["doubtful", "not established"]))
+    ]
 
-    first_chunk = True
+    new_num_taxa = len(taxa)
+    print(f"Filtered out {total_taxa - new_num_taxa} taxa. There are now {new_num_taxa} taxa.")
 
-    total_names = 0
+    # Rename columns to avoid confusion with "class" keyword and to match ID with vernacular names
+    taxa = taxa.rename(columns={
+        "col:class": "class_rank",
+        "col:ID": "col:taxonID",
+    })
 
-    for chunk in pd.read_csv(
-        input_file,
+    return taxa
+
+# A function to read vernacular names into a dataframe
+def read_names(names_file: Path) -> pd.DataFrame:
+    print("Reading...")
+
+    names = pd.read_csv(
+        names_file,
         sep="\t",
         quoting=csv.QUOTE_NONE,
+        engine="python",
+        on_bad_lines="error",
         dtype=str,
-        on_bad_lines="skip",
-        chunksize=100_000,
-        usecols=NAME_COLS
-    ):
-        filtered_names = chunk[
-            (chunk["dwc:taxonID"].isin(animal_ids)) &
-            (chunk["dcterms:language"].isin(LANGUAGE))
+        usecols=[
+            "col:taxonID",
+            "col:language",
+            "col:transliteration",
         ]
-
-        num_names = len(filtered_names)
-
-        print(f"Saving {num_names} vernacular names")
-
-        filtered_names.to_csv(
-            output_file,
-            sep="\t",
-            index=False,
-            mode="w" if first_chunk else "a",
-            header=first_chunk
-        )
-
-        total_names += num_names
-
-        first_chunk = False
-
-    print(f"Successfully created {output_file} with {total_names} names!")
-
-# Function to create a simplified SpeciesProfile file to save time when parsing it
-def create_species_profile_file(taxon_file, input_file, output_file):
-    print("Gathering taxa IDs into a set...")
-
-    animal_ids = set(
-        pd.read_csv(
-            taxon_file,
-            sep="\t",
-            quoting=csv.QUOTE_NONE,
-            usecols=["dwc:taxonID"],
-            dtype=str
-        )["dwc:taxonID"]
     )
 
-    print("Done!")
+    total_names = len(names)
+    print(f"Read in {total_names} names. Filtering...")
 
-    print("Starting the reading process. This may take a while...")
+    # Filter out other languages
+    names = names[
+        (names["col:language"].isin(LANGUAGE))
+    ]
 
-    first_chunk = True
+    # Remove duplicates
+    names = names.drop_duplicates(subset="col:taxonID")
+    new_num_names = len(names)
+    print(f"Filtered out {total_names - new_num_names}. There are now {new_num_names} names.")
 
-    total_profiles = 0
+    return names
 
-    for chunk in pd.read_csv(
-        input_file,
-        sep="\t",
-        quoting=csv.QUOTE_NONE,
-        dtype=str,
-        on_bad_lines="skip",
-        chunksize=100_000,
-        usecols=PROFILE_COLS
-    ):
-        filtered_profiles = chunk[
-            (chunk["dwc:taxonID"].isin(animal_ids))
-        ]
+# A function to take a dataframe and output the data into different json files by taxonomic rank
+def output_taxa_data(taxa: pd.DataFrame) -> None:
+    current_div = 1
+    total_divs = len(RANKS)
 
-        num_profiles = len(filtered_profiles)
+    # Loop through taxon ranks to divide them into different json files
+    for division in RANKS:
+        print(f"Parsing dataframe... ({current_div}/{total_divs})")
 
-        print(f"Saving {num_profiles} vernacular names")
+        # Filter by current taxon rank
+        rank = taxa[taxa["rank"] == division]
+        output = []
 
-        filtered_profiles.to_csv(
-            output_file,
-            sep="\t",
-            index=False,
-            mode="w" if first_chunk else "a",
-            header=first_chunk
-        )
+        # Loop through rows and add the dict structure to output
+        for row in rank.itertuples(index=False):
+            output.append(
+                {
+                    "scientificName": row.scientificName,
+                    "commonName": row.transliteration,
+                    "taxonomy": {
+                        "kingdom": row.kingdom,
+                        "phylum": row.phylum,
+                        "class": row.class_rank,
+                        "order": row.order,
+                        "family": row.family,
+                        "genus": row.genus,
+                    }
+                }
+            )
 
-        total_profiles += num_profiles
+        print(f"Outputting to file... ({current_div}/{total_divs})")
 
-        first_chunk = False
+        # Output the array of dicts to a json file
+        file_path = PROCESSED / f"{division}.json"
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(output, f, indent="\t")
+        current_div += 1
 
-    print(f"Successfully created {output_file} with {total_profiles} profiles!")
-    
 
-# main
-def main(force=False):
-    # Make sure data folder exists
-    DATA.mkdir(exist_ok=True)
-    OUTPUT.mkdir(exist_ok=True)
-    # Generate processed taxon file
-    if force or not Path.exists(PROCESSED_TAXON):
-        create_taxon_file(DATABASE_TAXON, PROCESSED_TAXON)
-    else:
-        print(f"Using existing {PROCESSED_TAXON}")
-    # Generate processed names file
-    if force or not Path.exists(PROCESSED_NAMES):
-        create_vernacular_names_file(PROCESSED_TAXON, DATABASE_NAMES, PROCESSED_NAMES)  
-    else:
-        print(f"Using existing {PROCESSED_NAMES}")
-    # Generate species profile file
-    if force or not Path.exists(PROCESSED_SPECIES_PROFILE):
-        create_species_profile_file(PROCESSED_TAXON, DATABASE_SPECIES_PROFILE, PROCESSED_SPECIES_PROFILE)
-    else:
-        print(f"Using existing {PROCESSED_SPECIES_PROFILE}")
+taxa = read_taxa(DATABASE_TAXON)
+names = read_names(DATABASE_NAMES)
 
-if __name__ == "__main__":
-    main(True)
+print("Merging...")
+taxa = taxa.merge(names, on="col:taxonID", how="left")
+taxa.columns = taxa.columns.str.removeprefix("col:")
+taxa = taxa.fillna("")
+print("Merged!")
+
+output_taxa_data(taxa)
