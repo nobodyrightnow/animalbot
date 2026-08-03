@@ -3,13 +3,9 @@
 # useful:
 # col:ID | cross-referencing specific taxa between files
 # col:status | filtering out disputed species
-# col:scientificName | ???
-# col:rank | useful! (kingdom, species, etc.)
-# col:uninomial | names of kingdoms, phyla, etc.
-# col:genericName | ???
-# col:infragenericEpithet | ???
-# col:specificEpithet | ???
-# col:infraspecificEpithet | ???
+# col:scientificName
+# col:rank | kingdom, species, etc.
+# col:specificEpithet | second part of the binomial name; necessary for constructing scientificName manually to avoid subgenus in parentheses
 # col:nameStatus | accepted, established, not established, doubtful, NaN
 # col:extinct | filtering out extinct species
 # col:species
@@ -62,7 +58,11 @@
 # col:scrutinizerDate
 # col:temporalRangeStart
 # col:temporalRangeEnd
+# col:uninomial
 # col:cultivarEpithet | additional name given to plant species
+# col:infraspecificEpithet | additional term given to subspecies
+# col:genericName | identical to genus
+# col:infragenericEpithet | subgenus
 # col:code
 # col:environment
 # col:link
@@ -104,26 +104,14 @@ def read_taxa(taxa_file: Path) -> pd.DataFrame:
             "col:status",
             "col:scientificName",
             "col:rank",
-            "col:uninomial",
-            "col:genericName",
-            "col:infragenericEpithet",
             "col:specificEpithet",
-            "col:infraspecificEpithet",
             "col:nameStatus",
             "col:extinct",
             "col:species",
-            "col:subgenus",
             "col:genus",
-            "col:subtribe",
-            "col:tribe",
-            "col:subfamily",
             "col:family",
-            "col:superfamily",
-            "col:suborder",
             "col:order",
-            "col:subclass",
             "col:class",
-            "col:subphylum",
             "col:phylum",
             "col:kingdom",
         ]
@@ -188,6 +176,9 @@ def read_names(names_file: Path) -> pd.DataFrame:
 def output_taxa_data(taxa: pd.DataFrame) -> None:
     current_div = 1
     total_divs = len(RANKS)
+    COLUMN_MAP = {
+        "class": "class_rank",
+    }
 
     # Loop through taxon ranks to divide them into different json files
     for division in RANKS:
@@ -199,18 +190,24 @@ def output_taxa_data(taxa: pd.DataFrame) -> None:
 
         # Loop through rows and add the dict structure to output
         for row in rank.itertuples(index=False):
+            # construct scientificName manually for species
+            scientificName = ""
+            if (division == "species"): # to remove subgenus from it
+                scientificName = f"{row.genus} {row.specificEpithet}"
+            else:
+                scientificName = row.scientificName
+            taxonomy = {}
+            for division2 in RANKS:
+                if division2 == division:
+                    break
+                else:
+                    attr = COLUMN_MAP.get(division2, division2)
+                    taxonomy[division2] = getattr(row, attr)
             output.append(
                 {
-                    "scientificName": row.scientificName,
-                    "commonName": row.transliteration,
-                    "taxonomy": {
-                        "kingdom": row.kingdom,
-                        "phylum": row.phylum,
-                        "class": row.class_rank,
-                        "order": row.order,
-                        "family": row.family,
-                        "genus": row.genus,
-                    }
+                    "scientificName": scientificName,
+                    "commonName": str(row.transliteration).lower(),
+                    "taxonomy": taxonomy
                 }
             )
 
@@ -233,3 +230,4 @@ taxa = taxa.fillna("")
 print("Merged!")
 
 output_taxa_data(taxa)
+print("Done!")
