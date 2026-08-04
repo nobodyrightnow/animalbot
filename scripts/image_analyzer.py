@@ -216,12 +216,14 @@ def print_results(similarities, taxa):
     possibilities = ""
 
     # build list of possibilities from top 5 guesses
+    num = 0
     for prob, i in zip(top_k.values, top_k.indices):
+        num += 1
         taxon = taxa[i.item()]
         if (taxon['commonName']):
-            possibilities += f"{i}. {taxon['commonName']} ({taxon['scientificName']}): {prob.item() * 100:2f}%\n"
-        else:
-            possibilities += f"{i}. {taxon['scientificName']}: {prob.item() * 100:.2f}%\n"
+            possibilities += f"{num}. {taxon['commonName']} ({taxon['scientificName']}): {prob.item() * 100:2f}%\n"
+        elif (taxon['scientificName']):
+            possibilities += f"{num}. {taxon['scientificName']}: {prob.item() * 100:.2f}%\n"
 
 
     # build main conclusion from top choice
@@ -230,7 +232,7 @@ def print_results(similarities, taxa):
     top_choice = taxa[best]
     if (top_choice['commonName']):
         message += f"I think it's {article(top_choice['commonName'])} ({top_choice['scientificName']})!"
-    else:
+    elif (top_choice['scientificName']):
         message += f"I think it's {article(top_choice['scientificName'])} specimen!"
 
     # return the message
