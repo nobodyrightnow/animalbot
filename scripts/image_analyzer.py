@@ -4,6 +4,7 @@ from PIL import Image
 import json
 from tqdm import tqdm
 import time
+from io import BytesIO
 from config import (
     CACHE,
     PROCESSED,
@@ -156,12 +157,14 @@ def get_text_features(rank: str, model, tokenizer, device, taxa):
     return text_features
 
 
-def get_image_features(image_path, model, preprocess, device):
+def get_image_features(image_bytes, model, preprocess, device):
     print("Preprocessing image...")
 
+    # load image from memory
+    image = Image.open(BytesIO(image_bytes)).convert("RGB")
     # load image
     image = preprocess( # adjust a PIL.Image object to fit what BioCLIP expects
-        Image.open(image_path) # open the image as a PIL.Image object
+        image # open the image as a PIL.Image object
     ).unsqueeze(0) # add a batch size dimension to the front of the tensor --
     # neural networks are designed to work with batches, so the model needs to be told how many images to expect
 
