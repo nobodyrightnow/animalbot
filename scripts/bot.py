@@ -2,6 +2,7 @@ import discord
 from dotenv import load_dotenv # for loading discord token from .env file
 import os
 from image_analyzer import analyze_image
+import asyncio
 
 # Load discord token
 load_dotenv()
@@ -19,6 +20,7 @@ client = discord.Client(intents=intents)
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
+
 
 @client.event
 async def on_message(message):
@@ -45,7 +47,10 @@ async def on_message(message):
         # download the image
         image = await image_attachments[0].read()
 
-        await message.reply(analyze_image(image))
-        return
+        # show typing indicator while analyzing image
+        async with message.channel.typing():
+            result = await asyncio.to_thread(analyze_image, image)
+
+        await message.reply(result)
 
 client.run(DISCORD_TOKEN)

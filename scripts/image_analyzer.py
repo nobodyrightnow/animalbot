@@ -12,6 +12,7 @@ from config import (
     article
 )
 
+EMBEDDING_CACHE = {}
 
 # Make sure cache directory exists
 CACHE.mkdir(exist_ok=True)
@@ -34,12 +35,17 @@ def get_text_features(rank: str, model, tokenizer, device, taxa):
 
     embeddings_file = CACHE / f"{rank}.pt" # where to load from/save to
 
+    # return already-loaded embeddings
+    if rank in EMBEDDING_CACHE:
+        return EMBEDDING_CACHE[rank]
     # check if embeddings are cached
     if embeddings_file.exists(): # load if so
         print("Loading cached embeddings...")
-        text_features = torch.load(embeddings_file)
+        text_features = torch.load(embeddings_file, map_location="cpu")
         print("Loaded!")
-        return text_features["embeddings"]
+
+        EMBEDDING_CACHE[rank] = text_features["embeddings"]
+        return EMBEDDING_CACHE[rank]
 
     # generate embeddings if not cached
     text_features = [] # to store prompt embeddings for each taxon
@@ -154,6 +160,7 @@ def get_text_features(rank: str, model, tokenizer, device, taxa):
         }, embeddings_file)
     print("Saved!")
 
+    EMBEDDING_CACHE[rank] = text_features
     return text_features
 
 
