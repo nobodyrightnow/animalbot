@@ -1,7 +1,7 @@
 import discord
 from dotenv import load_dotenv # for loading discord token from .env file
 import os
-from scripts.image_analyzer_bioclip import analyze_image
+from image_analyzer_bioclip import analyze_image
 import asyncio
 
 # Load discord token
