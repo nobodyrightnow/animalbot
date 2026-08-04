@@ -84,6 +84,11 @@ from config import (
     LANGUAGE,
     RANKS,
     PROCESSED,
+    OMITTED_PHYLUM,
+    OMITTED_CLASS,
+    OMITTED_ORDER,
+    OMITTED_FAMILY,
+    STATUS
 )
 
 csv.field_size_limit(10_000_000) # so python engine won't cry when reading files
@@ -124,8 +129,12 @@ def read_taxa(taxa_file: Path) -> pd.DataFrame:
     taxa = taxa[
         ~(taxa["col:rank"].isin(["unranked", "subspecies"])) &
         (taxa["col:extinct"] != "true") &
-        (taxa["col:status"] == "accepted") &
-        ~(taxa["col:nameStatus"].isin(["doubtful", "not established"]))
+        (taxa["col:status"].isin(STATUS)) &
+        ~(taxa["col:nameStatus"].isin(["doubtful", "not established"])) &
+        ~(taxa["col:phylum"].isin(OMITTED_PHYLUM)) &
+        ~(taxa["col:class"]).isin(OMITTED_CLASS) &
+        ~(taxa["col:order"].isin(OMITTED_ORDER)) &
+        ~(taxa["col:family"].isin(OMITTED_FAMILY))
     ]
 
     new_num_taxa = len(taxa)
